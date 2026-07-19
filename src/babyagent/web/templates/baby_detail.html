@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}{{ baby.name }} - 宝宝详情 - BabyAgent 管理控制台{% endblock %}
+{% block page_title %}宝宝详情{% endblock %}
+
+{% block content %}
+
+<!-- 基本信息 -->
+<div class="card">
+    <div class="card-header">{{ baby.name }} 的基本信息
+        <a href="/babies" class="btn btn-secondary btn-sm" style="float: right;">&larr; 返回列表</a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+        <div>
+            <span class="text-muted">姓名: </span>
+            <strong>{{ baby.name }}</strong>
+        </div>
+        <div>
+            <span class="text-muted">性别: </span>
+            {% if baby.gender == 'male' %}男
+            {% elif baby.gender == 'female' %}女
+            {% else %}未指定{% endif %}
+        </div>
+        <div>
+            <span class="text-muted">出生日期: </span>
+            {{ baby.birth_date }}
+        </div>
+        <div>
+            <span class="text-muted">当前月龄: </span>
+            {% if baby.age_months is not none %}
+            <strong>{{ baby.age_months }}</strong> 个月
+            {% else %}
+            -
+            {% endif %}
+        </div>
+        <div>
+            <span class="text-muted">所属门店: </span>
+            {{ store_name }}
+        </div>
+        <div>
+            <span class="text-muted">版本号: </span>
+            v{{ baby.version }}
+        </div>
+    </div>
+
+    {% if baby.dietary_restrictions and baby.dietary_restrictions != '[]' %}
+    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+        <span class="text-muted">饮食限制: </span>
+        <span class="badge badge-red">{{ baby.dietary_restrictions }}</span>
+    </div>
+    {% endif %}
+
+    {% if baby.notes_free_text %}
+    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+        <span class="text-muted">备注: </span>
+        {{ baby.notes_free_text }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- 过敏记录 -->
+<div class="card">
+    <div class="card-header">过敏记录
+        <span class="text-sm text-muted">(共 {{ baby.allergies|length }} 条)</span>
+    </div>
+
+    {% if baby.allergies %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>过敏原</th>
+                    <th>发现日期</th>
+                    <th>来源</th>
+                    <th>备注</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for allergy in baby.allergies %}
+                <tr>
+                    <td style="font-weight: 500;">{{ allergy.allergen }}</td>
+                    <td>{{ allergy.discovered_date }}</td>
+                    <td>
+                        {% if allergy.source == 'human' %}
+                        <span class="badge badge-blue">人工录入</span>
+                        {% else %}
+                        <span class="badge badge-yellow">LLM 识别</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ allergy.notes or '-' }}</td>
+                    <td>
+                        {% if allergy.removed %}
+                        <span class="badge badge-gray">已移除</span>
+                        {% else %}
+                        <span class="badge badge-green">有效</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="text-sm">暂无过敏记录</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 生长记录 -->
+<div class="card">
+    <div class="card-header">生长发育记录
+        <span class="text-sm text-muted">(共 {{ baby.growth_records|length }} 条)</span>
+    </div>
+
+    {% if baby.growth_records %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>记录日期</th>
+                    <th>身高 (cm)</th>
+                    <th>体重 (kg)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in baby.growth_records %}
+                <tr>
+                    <td>{{ record.record_date }}</td>
+                    <td>{{ record.height_cm if record.height_cm else '-' }}</td>
+                    <td>{{ record.weight_kg if record.weight_kg else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="text-sm">暂无生长记录</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- LLM 备注 -->
+{% if baby.notes %}
+<div class="card">
+    <div class="card-header">AI 备注</div>
+    {% for note in baby.notes %}
+    <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px;">
+        <div class="text-sm text-muted mb-12">{{ note.created_at }}</div>
+        <div style="color: #334155;">{{ note.content }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

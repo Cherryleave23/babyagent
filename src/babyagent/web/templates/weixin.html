@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}微信绑定 - BabyAgent 管理控制台{% endblock %}
+{% block page_title %}微信企业微信绑定{% endblock %}
+
+{% block content %}
+
+<!-- 当前配置 -->
+<div class="card">
+    <div class="card-header">当前配置</div>
+    <table style="font-size: 13px;">
+        <tr>
+            <td style="color: #64748b; width: 120px;">Bot ID</td>
+            <td>
+                {% if bot_id_raw %}
+                <code style="background: #f1f5f9; padding: 2px 8px; border-radius: 3px; font-size: 12px;">{{ bot_id }}</code>
+                <span class="badge badge-green" style="margin-left: 8px;">已配置</span>
+                {% else %}
+                <span class="badge badge-gray">{{ bot_id }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td style="color: #64748b;">Bot Token</td>
+            <td>
+                {% if bot_token_raw %}
+                <code style="background: #f1f5f9; padding: 2px 8px; border-radius: 3px; font-size: 12px;">{{ bot_token }}</code>
+                <span class="badge badge-green" style="margin-left: 8px;">已设置</span>
+                {% else %}
+                <span class="badge badge-gray">{{ bot_token }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td style="color: #64748b;">运行状态</td>
+            <td>
+                {% if enabled %}
+                <span class="badge badge-green">运行中</span>
+                {% else %}
+                <span class="badge badge-red">已停用</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- QR 码绑定 -->
+<div class="card">
+    <div class="card-header">二维码绑定
+        <div class="card-desc">通过 Gateway Platform 扫码绑定微信 Clawbot，绑定后 Bot ID 与 Token 将自动写入配置</div>
+    </div>
+
+    <div style="text-align: center; padding: 24px;">
+        <div style="width: 200px; height: 200px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 13px;">
+            {% if qr_status == 'pending' %}
+            <div>
+                <div style="font-size: 40px; margin-bottom: 8px;">&#9633;</div>
+                <div>点击下方按钮发起绑定</div>
+            </div>
+            {% else %}
+            <div>{{ qr_message }}</div>
+            {% endif %}
+        </div>
+
+        <button class="btn btn-primary" onclick="initQR()">发起二维码绑定</button>
+        <div id="qr-result" style="margin-top: 12px; font-size: 13px;"></div>
+    </div>
+</div>
+
+<!-- 操作日志 -->
+<div class="card">
+    <div class="card-header">绑定说明</div>
+    <ol style="padding-left: 20px; font-size: 13px; color: #475569; line-height: 2;">
+        <li>点击"发起二维码绑定"按钮</li>
+        <li>系统将向 Gateway Platform 请求绑定二维码</li>
+        <li>使用企业微信扫码完成授权</li>
+        <li>绑定成功后，Bot ID 和 Token 将自动填入系统配置</li>
+        <li>配置生效后，员工可通过企业微信与 BabyAgent 交互</li>
+    </ol>
+</div>
+
+<script>
+async function initQR() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '正在发起...';
+    const resultDiv = document.getElementById('qr-result');
+
+    try {
+        const resp = await fetch('/api/weixin/init-qr', { method: 'POST' });
+        const data = await resp.json();
+        resultDiv.innerHTML = '<span style="color: #16a34a;">' + data.message + '</span>';
+    } catch (err) {
+        resultDiv.innerHTML = '<span style="color: #dc2626;">请求失败: ' + err.message + '</span>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '发起二维码绑定';
+    }
+}
+</script>
+
+{% endblock %}

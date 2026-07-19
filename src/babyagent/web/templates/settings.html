@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}系统设置 - BabyAgent 管理控制台{% endblock %}
+{% block page_title %}系统设置{% endblock %}
+
+{% block content %}
+
+{% if message %}
+<div class="msg-success">{{ message }}</div>
+{% endif %}
+
+<!-- 数据隔离策略 -->
+<div class="card">
+    <div class="card-header">数据隔离策略
+        <div class="card-desc">控制产品数据和客户数据在不同门店/企业间的可见性</div>
+    </div>
+    <form method="post" action="/settings">
+        <div class="form-group">
+            <label class="form-label">隔离策略</label>
+            <select name="data_scope" class="form-select" style="max-width: 360px;">
+                <option value="enterprise" {% if data_scope == 'enterprise' %}selected{% endif %}>全企业共享 - 所有数据全企业可见</option>
+                <option value="store" {% if data_scope == 'store' %}selected{% endif %}>产品共享+客户隔离 - 产品全企业可见，客户仅本门店</option>
+                <option value="store_strict" {% if data_scope == 'store_strict' %}selected{% endif %}>完全隔离 - 所有数据仅本门店可见</option>
+            </select>
+            <div class="text-sm text-muted mt-8">修改后立即生效，不影响已存储的历史数据</div>
+        </div>
+    </form>
+</div>
+
+<!-- 上下文压缩 -->
+<div class="card">
+    <div class="card-header">上下文压缩参数
+        <div class="card-desc">控制对话历史压缩行为，影响 LLM 上下文窗口管理</div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+            <label class="form-label">最大上下文 Token 数</label>
+            <input type="number" name="max_context_tokens" form="settings-main" class="form-input" value="{{ compression.max_context_tokens }}" min="1024" max="256000">
+            <div class="text-sm text-muted mt-8">默认 64000</div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">压缩触发阈值</label>
+            <input type="number" step="0.05" name="compression_threshold" form="settings-main" class="form-input" value="{{ compression.compression_threshold }}" min="0.1" max="1.0">
+            <div class="text-sm text-muted mt-8">Token 使用率达此比例时触发压缩 (0.1-1.0)</div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">保留最近轮数</label>
+            <input type="number" name="keep_recent_turns" form="settings-main" class="form-input" value="{{ compression.keep_recent_turns }}" min="1" max="50">
+            <div class="text-sm text-muted mt-8">压缩时保留最近 N 轮对话不压缩</div>
+        </div>
+    </div>
+</div>
+
+<!-- 种子同步 -->
+<div class="card">
+    <div class="card-header">种子知识库同步
+        <div class="card-desc">总部知识库同步配置（R26），定期从中心端拉取最新知识数据</div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+            <label class="form-label">启用同步</label>
+            <select name="seed_sync_enabled" form="settings-main" class="form-select">
+                <option value="on" {% if seed_sync.enabled %}selected{% endif %}>启用</option>
+                <option value="off" {% if not seed_sync.enabled %}selected{% endif %}>停用</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">同步接口端点</label>
+            <input type="text" name="seed_sync_endpoint" form="settings-main" class="form-input" value="{{ seed_sync.endpoint }}" placeholder="https://kb.babyagent.example.com/api/v1/seed">
+        </div>
+    </div>
+    <div class="text-sm text-muted mt-8">
+        当前 Cron 表达式: <code>{{ seed_sync.cron }}</code> (每天凌晨3点)
+    </div>
+    <div class="mt-8">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="triggerSync()">手动触发同步</button>
+        <span id="sync-result" class="text-sm" style="margin-left: 12px;"></span>
+    </div>
+</div>
+
+<!-- 保存按钮 -->
+<form id="settings-main" method="post" action="/settings">
+    <div style="margin-top: 8px;">
+        <button type="submit" class="btn btn-primary">保存全部设置</button>
+    </div>
+</form>
+
+<script>
+async function triggerSync() {
+    const resultEl = document.getElementById('sync-result');
+    resultEl.textContent = '正在触发...';
+    try {
+        const resp = await fetch('/api/seed-sync/trigger', { method: 'POST' });
+        const data = await resp.json();
+        if (resp.ok) {
+            resultEl.innerHTML = '<span style="color: #16a34a;">' + data.message + '</span>';
+        } else {
+            resultEl.innerHTML = '<span style="color: #dc2626;">' + (data.detail || '失败') + '</span>';
+        }
+    } catch (err) {
+        resultEl.innerHTML = '<span style="color: #dc2626;">请求失败: ' + err.message + '</span>';
+    }
+}
+</script>
+
+{% endblock %}

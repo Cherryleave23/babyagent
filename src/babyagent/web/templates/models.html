@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}模型配置 - BabyAgent 管理控制台{% endblock %}
+{% block page_title %}模型配置{% endblock %}
+
+{% block content %}
+
+{% if test_result %}
+<div class="msg-success">{{ test_result }}</div>
+{% endif %}
+
+<!-- 基座模型 -->
+<div class="card">
+    <div class="card-header">基座模型配置
+        <div class="card-desc">用于主对话流程的大语言模型</div>
+    </div>
+
+    <form method="post" action="/models">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                <label class="form-label">模型提供商</label>
+                <select name="provider" class="form-select">
+                    {% for p in providers %}
+                    <option value="{{ p }}" {% if model.provider == p %}selected{% endif %}>
+                        {% if p == 'deepseek' %}DeepSeek
+                        {% elif p == 'zai' %}智谱 GLM (zai)
+                        {% elif p == 'openai-codex' %}OpenAI Codex
+                        {% elif p == 'anthropic' %}Anthropic Claude
+                        {% else %}{{ p }}{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">模型名称</label>
+                <input type="text" name="model_name" class="form-input" value="{{ model.model_name }}" placeholder="留空使用默认模型">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">API Key</label>
+            <input type="password" name="api_key" class="form-input" value="{{ model.api_key }}" placeholder="输入 API Key（已设置则不显示）">
+        </div>
+
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; margin-top: 16px;">
+            <div style="font-size: 13px; font-weight: 600; color: #0f172a; margin-bottom: 12px;">辅助模型配置（用于上下文压缩摘要）</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label">辅助模型提供商</label>
+                    <select name="aux_provider" class="form-select">
+                        {% for p in providers %}
+                        <option value="{{ p }}" {% if aux_model.provider == p %}selected{% endif %}>
+                            {% if p == 'deepseek' %}DeepSeek
+                            {% elif p == 'zai' %}智谱 GLM (zai)
+                            {% elif p == 'openai-codex' %}OpenAI Codex
+                            {% elif p == 'anthropic' %}Anthropic Claude
+                            {% else %}{{ p }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">辅助模型名称</label>
+                    <input type="text" name="aux_model_name" class="form-input" value="{{ aux_model.model_name }}" placeholder="留空使用默认模型">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-row" style="margin-top: 16px;">
+            <button type="submit" class="btn btn-primary">保存配置</button>
+            <button type="button" class="btn btn-secondary" onclick="testConnection()">测试连接</button>
+            <span id="test-result" class="text-sm" style="margin-left: 12px;"></span>
+        </div>
+    </form>
+</div>
+
+<!-- 参数说明 -->
+<div class="card">
+    <div class="card-header">提供商说明</div>
+    <table>
+        <thead>
+            <tr>
+                <th>提供商</th>
+                <th>默认模型</th>
+                <th>Base URL</th>
+                <th>说明</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="font-weight: 600;">DeepSeek</td>
+                <td>deepseek-chat</td>
+                <td>https://api.deepseek.com</td>
+                <td>性价比最高的中文模型</td>
+            </tr>
+            <tr>
+                <td style="font-weight: 600;">智谱 GLM</td>
+                <td>glm-4</td>
+                <td>https://open.bigmodel.cn</td>
+                <td>国产大模型，合规性好</td>
+            </tr>
+            <tr>
+                <td style="font-weight: 600;">OpenAI Codex</td>
+                <td>gpt-4o</td>
+                <td>https://api.openai.com</td>
+                <td>国际顶尖，需海外网络</td>
+            </tr>
+            <tr>
+                <td style="font-weight: 600;">Anthropic</td>
+                <td>claude-sonnet-4-20250514</td>
+                <td>https://api.anthropic.com</td>
+                <td>安全可靠，长上下文优势</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+async function testConnection() {
+    const resultEl = document.getElementById('test-result');
+    resultEl.textContent = '测试中...';
+    try {
+        const resp = await fetch('/api/health');
+        if (resp.ok) {
+            resultEl.innerHTML = '<span style="color: #16a34a;">服务可达 (API 连接正常)</span>';
+        } else {
+            resultEl.innerHTML = '<span style="color: #dc2626;">服务异常</span>';
+        }
+    } catch (err) {
+        resultEl.innerHTML = '<span style="color: #dc2626;">连接失败: ' + err + '</span>';
+    }
+}
+</script>
+
+{% endblock %}

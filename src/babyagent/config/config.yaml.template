@@ -1,0 +1,66 @@
+# BabyAgent 配置文件
+# 首次部署时从此模板复制为 config.yaml
+
+# ── 企业信息 ──
+enterprise:
+  name: "未命名企业"
+  store_id: "default"
+
+# ── 数据隔离策略 ──
+# options: enterprise(全通) | store(产品共享+客户隔离) | store_strict(完全隔离)
+data_scope: "enterprise"
+
+# ── 基座模型配置 ──
+model:
+  provider: "deepseek"  # deepseek | zai(GLM) | openai-codex | anthropic
+  model_name: ""  # 留空使用 provider 默认模型
+  api_key: ""     # 或设置环境变量 BABYAGENT_API_KEY
+  base_url: ""    # 留空使用 provider 默认 base_url（自定义代理填此处）
+  max_tokens: 4096
+  temperature: 0.7
+
+# ── 辅助模型（用于上下文压缩摘要） ──
+aux_model:
+  provider: "deepseek"
+  model_name: ""
+  api_key: ""
+
+# ── 微信 Clawbot 配置 ──
+weixin:
+  enabled: true
+  bot_id: ""  # iLink bot_id（扫码绑定后自动填入）
+  bot_token: ""  # iLink bot_token
+  long_poll_timeout_ms: 35000
+  dedup_ttl_seconds: 300
+
+# ── Web 管理控制台 ──
+web:
+  host: "127.0.0.1"
+  port: 8800
+  auth:
+    username: "admin"
+    password: ""  # 首次启动时生成随机密码
+
+# ── 端侧数据库 ──
+database:
+  path: "./data/babyagent.db"  # SQLite 路径
+  vector_path: "./data/vectors/"  # ChromaDB 持久化路径
+  seed_version: 1  # 总部种子库版本号
+
+# ── 总部知识库同步 ──
+seed_sync:
+  enabled: true
+  endpoint: "https://kb.babyagent.example.com/api/v1/seed"
+  cron: "0 3 * * *"  # 每天凌晨3点同步
+  delta_threshold_pct: 30  # delta 超过此比例触发全量重建
+
+# ── 上下文压缩 ──
+compression:
+  max_context_tokens: 64000
+  compression_threshold: 0.8  # token 使用率达此比例触发压缩
+  keep_recent_turns: 6  # 保留最近 N 轮对话不压缩
+
+# ── 日志 ──
+logging:
+  level: "INFO"
+  file: "./data/babyagent.log"

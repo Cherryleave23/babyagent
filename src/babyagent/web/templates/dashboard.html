@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}仪表盘 - BabyAgent 管理控制台{% endblock %}
+{% block page_title %}仪表盘{% endblock %}
+
+{% block content %}
+
+<!-- 统计卡片 -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">企业名称</div>
+        <div class="stat-value" style="font-size: 20px;">{{ stats.enterprise_name }}</div>
+        <div class="stat-desc">数据策略: {{ stats.data_scope_label }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">员工数</div>
+        <div class="stat-value">{{ stats.employees_count }}</div>
+        <div class="stat-desc">已注册员工</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">宝宝档案数</div>
+        <div class="stat-value">{{ stats.babies_count }}</div>
+        <div class="stat-desc">宝宝健康档案</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">产品数</div>
+        <div class="stat-value">{{ stats.products_count }}</div>
+        <div class="stat-desc">在售产品 SKU</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <!-- 系统状态 -->
+    <div class="card">
+        <div class="card-header">系统运行状态</div>
+        <table style="font-size: 13px;">
+            <tr>
+                <td style="color: #64748b; width: 140px;">基座模型</td>
+                <td><span class="badge badge-blue">{{ stats.model_provider }}</span></td>
+            </tr>
+            <tr>
+                <td style="color: #64748b;">知识库版本</td>
+                <td>v{{ stats.seed_version }}</td>
+            </tr>
+            <tr>
+                <td style="color: #64748b;">微信推送</td>
+                <td>
+                    {% if stats.weixin_enabled %}
+                    <span class="badge badge-green">已启用</span>
+                    {% else %}
+                    <span class="badge badge-gray">未启用</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="color: #64748b;">种子同步</td>
+                <td>
+                    {% if stats.seed_sync_enabled %}
+                    <span class="badge badge-green">已启用</span>
+                    {% else %}
+                    <span class="badge badge-gray">未启用</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 快速入口 -->
+    <div class="card">
+        <div class="card-header">快速操作</div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <a href="/employees" class="btn btn-secondary" style="justify-content: center;">
+                前往员工管理 &rarr;
+            </a>
+            <a href="/babies" class="btn btn-secondary" style="justify-content: center;">
+                查看宝宝档案 &rarr;
+            </a>
+            <a href="/models" class="btn btn-secondary" style="justify-content: center;">
+                配置模型参数 &rarr;
+            </a>
+            <a href="/settings" class="btn btn-secondary" style="justify-content: center;">
+                系统设置 &rarr;
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 数据隔离说明 -->
+<div class="card" style="margin-top: 16px;">
+    <div class="card-header">数据隔离策略说明</div>
+    <table>
+        <thead>
+            <tr>
+                <th>策略</th>
+                <th>产品数据</th>
+                <th>客户/宝宝数据</th>
+                <th>适用场景</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="font-weight: 600;">全企业共享</td>
+                <td>全企业可见</td>
+                <td>全企业可见</td>
+                <td>单体门店或品牌统一管理</td>
+            </tr>
+            <tr>
+                <td style="font-weight: 600;">产品共享+客户隔离</td>
+                <td>全企业可见</td>
+                <td>仅本门店可见</td>
+                <td>连锁门店共享产品库</td>
+            </tr>
+            <tr>
+                <td style="font-weight: 600;">完全隔离</td>
+                <td>仅本门店</td>
+                <td>仅本门店可见</td>
+                <td>加盟商独立运营</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="mt-8">
+        当前策略: <span class="badge badge-blue">{{ stats.data_scope_label }}</span>
+    </div>
+</div>
+
+{% endblock %}

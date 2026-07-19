@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}员工管理 - BabyAgent 管理控制台{% endblock %}
+{% block page_title %}员工管理{% endblock %}
+
+{% block content %}
+
+<!-- 添加员工 -->
+<div class="card">
+    <div class="card-header">添加员工</div>
+    <form id="add-employee-form" class="inline-form" onsubmit="return addEmployee(event)">
+        <div class="form-group">
+            <label class="form-label">姓名</label>
+            <input type="text" id="emp-name" class="form-input" placeholder="员工姓名" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">企业微信 ID</label>
+            <input type="text" id="emp-weixin" class="form-input" placeholder="微信用户 ID">
+        </div>
+        <div class="form-group">
+            <label class="form-label">所属门店</label>
+            <select id="emp-store" class="form-select" required>
+                <option value="">请选择门店</option>
+                {% for s in stores %}
+                <option value="{{ s.id }}">{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">角色</label>
+            <select id="emp-role" class="form-select">
+                <option value="staff">员工</option>
+                <option value="manager">店长</option>
+                <option value="admin">管理员</option>
+            </select>
+        </div>
+        <div class="form-group" style="align-self: flex-end;">
+            <button type="submit" class="btn btn-primary">添加</button>
+        </div>
+    </form>
+    <div id="add-result" class="mt-8"></div>
+</div>
+
+<!-- 员工列表 -->
+<div class="card">
+    <div class="card-header">员工列表
+        <span class="text-sm text-muted" style="margin-left: 8px;">共 {{ employees|length }} 人</span>
+    </div>
+
+    {% if employees %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>姓名</th>
+                    <th>企业微信 ID</th>
+                    <th>所属门店</th>
+                    <th>角色</th>
+                    <th>创建时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td style="font-weight: 500;">{{ emp.name }}</td>
+                    <td><code style="font-size: 11px; background: #f1f5f9; padding: 1px 6px; border-radius: 2px;">{{ emp.weixin_user_id or '(未绑定)' }}</code></td>
+                    <td>{{ emp.store_name or '-' }}</td>
+                    <td>
+                        {% if emp.role == 'admin' %}
+                        <span class="badge badge-blue">管理员</span>
+                        {% elif emp.role == 'manager' %}
+                        <span class="badge badge-green">店长</span>
+                        {% else %}
+                        <span class="badge badge-gray">员工</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-sm text-muted">{{ emp.created_at or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">&#9786;</div>
+        <div>暂无员工记录</div>
+        <div class="text-sm mt-8">使用上方表单添加第一位员工</div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+async function addEmployee(event) {
+    event.preventDefault();
+    const resultDiv = document.getElementById('add-result');
+
+    const payload = {
+        name: document.getElementById('emp-name').value.trim(),
+        weixin_user_id: document.getElementById('emp-weixin').value.trim(),
+        store_id: document.getElementById('emp-store').value,
+        role: document.getElementById('emp-role').value,
+    };
+
+    if (!payload.name || !payload.store_id) {
+        resultDiv.innerHTML = '<div class="msg-error">请填写姓名和所属门店</div>';
+        return false;
+    }
+
+    try {
+        const resp = await fetch('/api/employees', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        if (resp.ok) {
+            resultDiv.innerHTML = '<div class="msg-success">员工已添加，刷新页面查看</div>';
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            const err = await resp.json();
+            resultDiv.innerHTML = '<div class="msg-error">添加失败: ' + (err.detail || err.message || '未知错误') + '</div>';
+        }
+    } catch (err) {
+        resultDiv.innerHTML = '<div class="msg-error">请求失败: ' + err.message + '</div>';
+    }
+
+    return false;
+}
+</script>
+
+{% endblock %}

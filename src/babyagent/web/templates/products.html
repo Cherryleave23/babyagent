@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}产品管理 - BabyAgent 管理控制台{% endblock %}
+{% block page_title %}产品管理{% endblock %}
+
+{% block content %}
+
+<!-- 添加产品 -->
+<div class="card">
+    <div class="card-header">添加产品</div>
+    <form id="add-product-form" onsubmit="return addProduct(event)">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+                <label class="form-label">产品名称 *</label>
+                <input type="text" id="prod-name" class="form-input" placeholder="产品名称" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">分类</label>
+                <input type="text" id="prod-category" class="form-input" placeholder="如: 奶粉、辅食、纸尿裤">
+            </div>
+            <div class="form-group">
+                <label class="form-label">所属门店 *</label>
+                <select id="prod-store" class="form-select" required>
+                    <option value="">请选择门店</option>
+                    {% for s in stores %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">适用最小月龄</label>
+                <input type="number" id="prod-age-min" class="form-input" placeholder="如: 0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">适用最大月龄</label>
+                <input type="number" id="prod-age-max" class="form-input" placeholder="如: 6">
+            </div>
+            <div class="form-group">
+                <label class="form-label">价格 (元)</label>
+                <input type="number" step="0.01" id="prod-price" class="form-input" placeholder="如: 128.00">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">描述</label>
+            <input type="text" id="prod-desc" class="form-input" placeholder="产品简要描述">
+        </div>
+        <div class="flex-row">
+            <button type="submit" class="btn btn-primary">添加产品</button>
+            <span id="add-prod-result" class="text-sm"></span>
+        </div>
+    </form>
+</div>
+
+<!-- 产品列表 -->
+<div class="card">
+    <div class="card-header">
+        <div class="flex-between">
+            <span>产品列表 <span class="text-sm text-muted">(共 {{ products|length }} 个)</span></span>
+            <div class="flex-row">
+                <label style="font-size: 12px; color: #64748b;">按分类筛选:</label>
+                <select id="category-filter" class="form-select" style="width: auto; padding: 4px 12px; font-size: 12px;" onchange="filterByCategory(this.value)">
+                    <option value="">全部</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    {% if products %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>产品名称</th>
+                    <th>分类</th>
+                    <th>适用月龄</th>
+                    <th>价格</th>
+                    <th>描述</th>
+                    <th>所属门店</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prod in products %}
+                <tr>
+                    <td style="font-weight: 500;">{{ prod.name }}</td>
+                    <td>
+                        {% if prod.category %}
+                        <span class="badge badge-blue">{{ prod.category }}</span>
+                        {% else %}
+                        <span class="badge badge-gray">未分类</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if prod.suitable_age_min_months is not none or prod.suitable_age_max_months is not none %}
+                            {% if prod.suitable_age_min_months is not none %}{{ prod.suitable_age_min_months }}{% else %}0{% endif %}
+                            -
+                            {% if prod.suitable_age_max_months is not none %}{{ prod.suitable_age_max_months }}{% else %}+{% endif %} 个月
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if prod.price %}
+                        {{ "%.2f"|format(prod.price) }} 元
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ prod.description or '-' }}
+                    </td>
+                    <td>{{ prod.store_name or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">&#9790;</div>
+        <div>暂无产品记录</div>
+        <div class="text-sm mt-8">使用上方表单添加第一个产品</div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function filterByCategory(cat) {
+    if (cat) {
+        window.location.href = '/products?category=' + encodeURIComponent(cat);
+    } else {
+        window.location.href = '/products';
+    }
+}
+
+async function addProduct(event) {
+    event.preventDefault();
+    const resultDiv = document.getElementById('add-prod-result');
+
+    const payload = {
+        name: document.getElementById('prod-name').value.trim(),
+        category: document.getElementById('prod-category').value.trim(),
+        store_id: document.getElementById('prod-store').value,
+        suitable_age_min_months: document.getElementById('prod-age-min').value ? parseInt(document.getElementById('prod-age-min').value) : null,
+        suitable_age_max_months: document.getElementById('prod-age-max').value ? parseInt(document.getElementById('prod-age-max').value) : null,
+        price: document.getElementById('prod-price').value ? parseFloat(document.getElementById('prod-price').value) : null,
+        description: document.getElementById('prod-desc').value.trim(),
+    };
+
+    if (!payload.name || !payload.store_id) {
+        resultDiv.innerHTML = '<span style="color: #dc2626;">请填写产品名称和所属门店</span>';
+        return false;
+    }
+
+    try {
+        const resp = await fetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        if (resp.ok) {
+            resultDiv.innerHTML = '<span style="color: #16a34a;">产品已添加，刷新页面查看</span>';
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            const err = await resp.json();
+            resultDiv.innerHTML = '<span style="color: #dc2626;">添加失败: ' + (err.detail || err.message || '未知错误') + '</span>';
+        }
+    } catch (err) {
+        resultDiv.innerHTML = '<span style="color: #dc2626;">请求失败: ' + err.message + '</span>';
+    }
+
+    return false;
+}
+</script>
+
+{% endblock %}

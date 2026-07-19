@@ -1,0 +1,69 @@
+[project]
+name = "babyagent"
+version = "0.1.0"
+description = "母婴垂类 B2B 智能 Agent — 基于 Hermes 内核魔改"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "BabyAgent Team"}]
+keywords = ["ai", "agent", "baby", "maternal-infant", "llm", "wechat"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    # 核心依赖（来自 Hermes）
+    "aiohttp>=3.9",
+    "cryptography>=42",
+    "tiktoken>=0.7",
+    "httpx>=0.27",
+    "pydantic>=2",
+    "numpy>=1.26",
+    "SQLAlchemy>=2",
+    "PyYAML>=6",
+    "python-dotenv>=1",
+
+    # 向量数据库
+    "chromadb>=0.5",
+    "sentence-transformers>=3",
+
+    # Web 管理控制台
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "jinja2>=3",
+
+    # 知识库同步
+    "requests>=2.32",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "black>=24",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[project.scripts]
+babyagent = "babyagent.main:main"
+
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true

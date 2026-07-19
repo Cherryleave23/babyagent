@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}宝宝档案 - BabyAgent 管理控制台{% endblock %}
+{% block page_title %}宝宝档案{% endblock %}
+
+{% block content %}
+
+<!-- 搜索栏 -->
+<div class="card">
+    <div class="flex-between mb-12">
+        <span style="font-size: 13px; color: #64748b;">共 {{ babies|length }} 条记录</span>
+    </div>
+    <form method="get" action="/babies" class="search-bar">
+        <input type="text" name="search" class="form-input" placeholder="按姓名搜索..." value="{{ search }}" style="max-width: 240px;">
+        <select name="store_id" class="form-select" style="max-width: 180px;">
+            <option value="">全部门店</option>
+            {% for s in stores %}
+            <option value="{{ s.id }}" {% if store_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">搜索</button>
+        {% if search or store_id %}
+        <a href="/babies" class="btn btn-secondary btn-sm">清除</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- 宝宝列表 -->
+<div class="card">
+    <div class="card-header">宝宝档案列表</div>
+
+    {% if babies %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>姓名</th>
+                    <th>性别</th>
+                    <th>出生日期</th>
+                    <th>月龄</th>
+                    <th>过敏情况</th>
+                    <th>所属门店</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for baby in babies %}
+                <tr>
+                    <td style="font-weight: 500;">
+                        <a href="/babies/{{ baby.id }}">{{ baby.name }}</a>
+                    </td>
+                    <td>
+                        {% if baby.gender == 'male' %}
+                        <span style="color: #3b82f6;">男</span>
+                        {% elif baby.gender == 'female' %}
+                        <span style="color: #ec4899;">女</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ baby.birth_date }}</td>
+                    <td>
+                        {% set birth = baby.birth_date %}
+                        {% set today = none %}
+                        {{ _approx_months(baby.birth_date) }}
+                    </td>
+                    <td>
+                        {% set restrictions = baby.dietary_restrictions or '[]' %}
+                        {% if restrictions and restrictions != '[]' %}
+                        <span class="badge badge-red">有过敏</span>
+                        {% else %}
+                        <span class="badge badge-gray">无记录</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ baby.store_name or '-' }}</td>
+                    <td>
+                        <a href="/babies/{{ baby.id }}" class="btn btn-secondary btn-sm">详情</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">&#9829;</div>
+        <div>暂无宝宝档案</div>
+        <div class="text-sm mt-8">通过微信聊天交互自动创建或通过 API 添加</div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
