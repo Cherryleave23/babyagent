@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Optional
+from typing import Optional, Union
 
 from .intent import IntentResult, MessageIntent
 
@@ -103,7 +103,7 @@ def is_emergency_situation(message_text: str) -> bool:
 
 
 def generate_rejection(
-    intent_result: Optional[IntentResult] = None,
+    intent_result: Optional[Union[IntentResult, str]] = None,
     message_text: str = "",
 ) -> str:
     """生成拒绝回复文本。
@@ -116,12 +116,18 @@ def generate_rejection(
     绝不调用 LLM（I2 不变量）。
 
     Args:
-        intent_result: 意图分类结果，为 None 时仅检查 message_text。
+        intent_result: IntentResult 对象、意图字符串("out_of_scope"/"emergency") 或 None。
         message_text: 原始用户消息，用于紧急关键词检测。
 
     Returns:
         中文拒绝回复文本。
     """
+    # 支持直接传字符串类型
+    if isinstance(intent_result, str):
+        if intent_result == "emergency":
+            return _REJECT_EMERGENCY
+        return _REJECT_OUT_OF_SCOPE
+
     # 紧急情况优先检测（R6）
     if is_emergency_situation(message_text):
         logger.info("生成紧急就医转介回复")

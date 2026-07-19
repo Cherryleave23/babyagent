@@ -16,6 +16,8 @@ def parse_args():
         description="BabyAgent — 母婴垂类 B2B 智能 Agent",
     )
     sub = parser.add_subparsers(dest="command")
+    # 设置默认命令，使 --help 在无子命令时也能正常输出
+    parser.set_defaults(command=None)
 
     # gateway 模式
     gw = sub.add_parser("gateway", help="启动 Gateway（微信 Clawbot + Agent 核心）")
@@ -73,7 +75,10 @@ def main():
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
-    if args.command == "gateway":
+    if args.command is None:
+        # 无子命令时 argparse 已自动打印帮助，直接退出
+        sys.exit(0)
+    elif args.command == "gateway":
         run_gateway(config_path=args.config, port=args.port, verbose=args.verbose)
     elif args.command == "web":
         run_web(host=args.host, port=args.port)

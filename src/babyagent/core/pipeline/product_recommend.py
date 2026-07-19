@@ -39,7 +39,7 @@ class ProductRecommendInput(BaseModel):
 
     baby_profile: dict[str, Any] = Field(default_factory=dict, description="宝宝档案")
     employee_message: str = Field(default="", description="员工消息")
-    model_config: dict[str, Any] = Field(default_factory=dict, description="模型配置")
+    llm_config: dict[str, Any] = Field(default_factory=dict, description="模型配置")
 
 
 class ProductRecommendOutput(BaseModel):
@@ -606,7 +606,7 @@ async def recommend_products(
         - products_list: 来自 DB 的产品列表
         - explanation_text: LLM 生成的推荐理由
     """
-    cfg = model_config or input.model_config
+    cfg = model_config or input.llm_config
 
     logger.info("产品推荐管线启动: message='%s...'", input.employee_message[:60])
 
